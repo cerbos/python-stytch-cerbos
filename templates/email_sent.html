@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}You've got mail!{% endblock %}
+{% block body %}
+  <div>
+    <p>Check your inbox (including the promotions folder) <br/>for the login link.</p>
+    <p>Didn't find it? <a class="text-blue-600" href="{{ url_for('index') }}"><b>Send it again.</b></a></p>
+  </div>
+{% endblock %}
