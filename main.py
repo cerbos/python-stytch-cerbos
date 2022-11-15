@@ -13,12 +13,20 @@ from fastapi.security import HTTPBearer
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from stytch import Client
+import logging
 
 # from stytch.api.error import StytchError
 
 MAGIC_LINK_URL = "http://localhost:3000/callback"  # This needs to match the `Login` and `Sign-up` URLs in the Stytch console
 SESSION_DURATION_MINUTES = 60
 SESSION_TOKEN_KEY = "session_token"
+
+CERBOS_HOST = "http://localhost:3592"
+if (u := os.getenv("CERBOS_HOST")):
+    CERBOS_HOST = f"http://{u}:3592"
+
+
+logger = logging.getLogger()
 
 
 app = FastAPI()
@@ -45,7 +53,7 @@ class TrustedMetadata:
 @dataclass
 class User:
     user_id: str
-    trusted_metadata: TrustedMetadata = TrustedMetadata()
+    trusted_metadata: TrustedMetadata = field(default_factory=TrustedMetadata)
 
     @property
     def roles(self) -> set[str]:
@@ -72,6 +80,7 @@ def get_user_from_session(request: Request) -> User:
             session_token=token,
         )
     except Exception:
+        logger.exception("token error")
         request.session.pop(SESSION_TOKEN_KEY)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Session token invalid"
@@ -201,12 +210,12 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
         ]
     )
 
-    with CerbosClient(host="http://localhost:3592") as c:
+    with CerbosClient(host=CERBOS_HOST) as c:
         try:
             resp = c.check_resources(principal=principal, resources=resource_list)
             resp.raise_if_failed()
         except Exception:
-            # TODO better handling
+            logger.exception("cerbos error")
             request.session.pop(SESSION_TOKEN_KEY, None)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized"
@@ -241,4 +250,4 @@ async def logout(request: Request, error: str = ""):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=3000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True)

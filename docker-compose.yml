@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  cerbos:
+    container_name: cerbos
+    image: ghcr.io/cerbos/cerbos:latest
+    restart: always
+    command: ["server", "--log-level=warn"]
+    volumes:
+      - ./cerbos/policies:/policies
+    ports:
+      - 3592:3592
+      - 3593:3593
+
+  stytch-server:
+    container_name: stytch-server
+    build: .
+    environment:
+      - CERBOS_HOST=cerbos
+      - STYTCH_PROJECT_ID=${STYTCH_PROJECT_ID}
+      - STYTCH_SECRET=${STYTCH_SECRET}
+    ports:
+      - 3000:3000
+    depends_on:
+      - cerbos
