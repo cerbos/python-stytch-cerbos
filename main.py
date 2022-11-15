@@ -181,7 +181,7 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
                     "abc123",
                     "contact",
                     attr={
-                        "owner": user.user_id,
+                        "owner_id": user.user_id,
                     },
                 ),
                 actions=actions,
@@ -192,7 +192,7 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
                     "def456",
                     "contact",
                     attr={
-                        "owner": "other_user_id",
+                        "owner_id": "other_user_id",
                     },
                 ),
                 actions=actions,
