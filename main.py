@@ -16,17 +16,10 @@ from stytch import Client
 
 # from stytch.api.error import StytchError
 
-# MAGIC_LINK_URL = f"http://{HOST}:{PORT}/authenticate"
-MAGIC_LINK_URL = "http://localhost:3000/callback"
+MAGIC_LINK_URL = "http://localhost:3000/callback"  # This needs to match the `Login` and `Sign-up` URLs in the Stytch console
 SESSION_DURATION_MINUTES = 60
 SESSION_TOKEN_KEY = "session_token"
 
-
-stytch_client = Client(
-    project_id=os.environ["STYTCH_PROJECT_ID"],
-    secret=os.environ["STYTCH_SECRET"],
-    environment="test",
-)
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="super-secret-key!")
@@ -34,6 +27,12 @@ app.add_middleware(SessionMiddleware, secret_key="super-secret-key!")
 bearer_scheme = HTTPBearer()
 
 templates = Jinja2Templates(directory="templates")
+
+stytch_client = Client(
+    project_id=os.environ["STYTCH_PROJECT_ID"],
+    secret=os.environ["STYTCH_SECRET"],
+    environment="test",
+)
 
 
 @dataclass_json
@@ -171,9 +170,6 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
         user.user_id,
         roles=user.roles,
         policy_version="20210210",
-        attr={
-            "foo": "bar",
-        },
     )
 
     # resources would usually be retrieved from your data store
