@@ -2,7 +2,14 @@
 {% block title %}Sign in with Email Magic Link!{% endblock %}
 {% block body %}
   <div>
-    <p>Sign up or log in to place your order. <br/>No password required!</p>
+    <p>Sign up or log in. <br/>No password required!</p>
+    {% if errors %}
+    <div class="my-2 px-2 bg-yellow-200 text-sm">
+        {% for error in errors %}
+        <li class="py-2 list-none">{{error}}</li>
+        {% endfor %}
+    </div>
+    {% endif %}
     <form action="{{ url_for('login_or_create_user') }}" method="POST">
       <div>
         <input class="shadow border rounded text-gray-700 leading-tight my-4 py-2 px-3" type="text" name="email" placeholder="example@email.com" />

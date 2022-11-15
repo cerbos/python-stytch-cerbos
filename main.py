@@ -1,6 +1,7 @@
 import json
-from dataclasses import dataclass, field
 import os
+import urllib.parse
+from dataclasses import dataclass, field
 
 import uvicorn
 from cerbos.sdk.client import CerbosClient
@@ -95,11 +96,20 @@ def push_role_to_stytch(user_id: str, role: str):
 
 
 @app.get("/")
-async def index(request: Request):
+async def index(request: Request, error: str = ""):
     if request.session.get(SESSION_TOKEN_KEY):
         return RedirectResponse(url="/user", status_code=status.HTTP_303_SEE_OTHER)
+
+    ctx = {
+        "request": request,
+        "id": id,
+    }
+    if error:
+        ctx["errors"] = [error]
+
     return templates.TemplateResponse(
-        "login_or_signup.html", {"request": request, "id": id}
+        "index.html",
+        ctx,
     )
 
 
@@ -137,22 +147,17 @@ async def callback(request: Request):
         if (t := request.session.get(SESSION_TOKEN_KEY)) is not None:
             data["session_token"] = t
         resp = stytch_client.magic_links.authenticate(**data)
+
+        if resp.status_code != 200:
+            raise Exception
+
     # except StytchError as error:
     # # Handle Stytch errors here
     # # https://stytch.com/docs/api/errors/400
-    # if error.error_type == "invalid_token":
-    # print("Whoops! Try again?")
-    except Exception:
-        return templates.TemplateResponse(
-            "index.html", {"request": request, "errors": ["Error authenticating token"]}
-        )
-        # raise HTTPException(
-        # status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized"
-        # )
 
-    if resp.status_code != 200:
-        print(resp)
-        return "something went wrong authenticating token"
+    except Exception:
+        msg = urllib.parse.quote("Error authenticating token")
+        return RedirectResponse(url=f"/logout?error={msg}")
 
     if (t := resp.json().get("session_token")) is not None:
         request.session[SESSION_TOKEN_KEY] = t
@@ -229,9 +234,14 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
 
 
 @app.get("/logout")
-async def logout(request: Request):
+async def logout(request: Request, error: str = ""):
     request.session.pop(SESSION_TOKEN_KEY, None)
-    return RedirectResponse(url="/")
+
+    url = "/"
+    if error:
+        url = f"/?error={error}"
+
+    return RedirectResponse(url=url)
 
 
 if __name__ == "__main__":
