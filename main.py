@@ -131,6 +131,7 @@ async def login_or_create_user(
 
         if resp.status_code != 200:
             raise Exception
+
     except Exception:
         return templates.TemplateResponse(
             "index.html",
@@ -149,8 +150,12 @@ async def callback(request: Request):
             "token": request.query_params["token"],
             "session_duration_minutes": SESSION_DURATION_MINUTES,
         }
+
+        # If we already have a local session token, we send it with the authenticate request. Stripe
+        # will refresh it if it's valid
         if (t := request.session.get(SESSION_TOKEN_KEY)) is not None:
-            data["session_token"] = t
+            data[SESSION_TOKEN_KEY] = t
+
         resp = stytch_client.magic_links.authenticate(**data)
 
         if resp.status_code != 200:
@@ -164,7 +169,8 @@ async def callback(request: Request):
         request.session[SESSION_ERROR_KEY] = "Error authenticating token" 
         return RedirectResponse(url=f"/logout")
 
-    if (t := resp.json().get("session_token")) is not None:
+    # Refresh the session token, if present (NOTE: it should always be present)
+    if (t := resp.json().get(SESSION_TOKEN_KEY)) is not None:
         request.session[SESSION_TOKEN_KEY] = t
 
     return RedirectResponse(url="/user")
