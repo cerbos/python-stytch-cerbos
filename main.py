@@ -1,6 +1,5 @@
 import json
 import os
-import urllib.parse
 from dataclasses import dataclass, field
 
 import uvicorn
@@ -19,6 +18,7 @@ import logging
 MAGIC_LINK_URL = "http://localhost:3000/callback"  # This needs to match the `Login` and `Sign-up` URLs in the Stytch console
 SESSION_DURATION_MINUTES = 60
 SESSION_TOKEN_KEY = "session_token"
+SESSION_ERROR_KEY = "errors"
 
 CERBOS_HOST = "http://localhost:3592"
 if (u := os.getenv("CERBOS_HOST")):
@@ -101,7 +101,7 @@ def push_role_to_stytch(user_id: str, role: str):
 
 
 @app.get("/")
-async def index(request: Request, error: str = ""):
+async def index(request: Request):
     if request.session.get(SESSION_TOKEN_KEY):
         return RedirectResponse(url="/user", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -109,7 +109,7 @@ async def index(request: Request, error: str = ""):
         "request": request,
         "id": id,
     }
-    if error:
+    if (error := request.session.pop(SESSION_ERROR_KEY, None)):
         ctx["errors"] = [error]
 
     return templates.TemplateResponse(
@@ -161,8 +161,8 @@ async def callback(request: Request):
     # # https://stytch.com/docs/api/errors/400
 
     except Exception:
-        msg = urllib.parse.quote("Error authenticating token")
-        return RedirectResponse(url=f"/logout?error={msg}")
+        request.session[SESSION_ERROR_KEY] = "Error authenticating token" 
+        return RedirectResponse(url=f"/logout")
 
     if (t := resp.json().get("session_token")) is not None:
         request.session[SESSION_TOKEN_KEY] = t
@@ -236,14 +236,9 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
 
 
 @app.get("/logout")
-async def logout(request: Request, error: str = ""):
+async def logout(request: Request):
     request.session.pop(SESSION_TOKEN_KEY, None)
-
-    url = "/"
-    if error:
-        url = f"/?error={error}"
-
-    return RedirectResponse(url=url)
+    return RedirectResponse(url="/")
 
 
 if __name__ == "__main__":
