@@ -9,7 +9,6 @@ from cerbos.sdk.model import Principal, Resource, ResourceAction, ResourceList
 from dataclasses_json import dataclass_json
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import HTTPBearer
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from stytch import Client
@@ -31,8 +30,6 @@ logger = logging.getLogger()
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="super-secret-key!")
-
-bearer_scheme = HTTPBearer()
 
 templates = Jinja2Templates(directory="templates")
 
