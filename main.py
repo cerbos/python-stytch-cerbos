@@ -181,7 +181,6 @@ async def user(request: Request, user: User = Depends(get_user_from_session)):
     principal = Principal(
         user.user_id,
         roles=user.roles,
-        policy_version="20210210",
     )
 
     # resources would usually be retrieved from your data store
