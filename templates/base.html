@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css">
+    <title>Cerbos | Stytch demo</title>
+    {% block head %}
+    {% endblock %}
+  </head>
+  <body class="px-4 py-10">
+    <div class="flex justify-between mb-2">
+      <h1 class="pb-4 text-base leading-6 font-bold text-xl">Cerbos Cognito Demo</h1>
+      {% block navbar %}
+      {% endblock %}
+    </div>
+    <h1 class="pb-4 text-base leading-6 font-bold text-l">{% block title %}{% endblock %}</h1>
+    {% block body %}
+    {% endblock %}
+    <div class="pt-5 m-5 text-sm text-center">
+      <p>The code for this example is available <a class="underline" href="https://github.com/cerbos/python-stytch-cerbos">Github</a>. More information, examples and documentation can be found on <a class="underline" href="https://cerbos.dev">cerbos.dev</a>
+      </p>
+    </div>
+  </body>
+</html>
